@@ -64,50 +64,124 @@
 // }
 
 // sensor.controller.ts
-import { Controller, Post, Body, Get, Param, Patch, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, NotFoundException, Inject } from '@nestjs/common';
 import { SensorService } from './sensor.service';
 import { CreateSensorDto } from './dto/create-sensor.dto';
 import { UpdateSensorDto } from './dto/update-sensor.dto';
 import { Sensor } from './entities/sensor.entity';
+import { EmailService } from '../email/email.service'; // importoi EmailService
+import { UserService } from '../user/user.service'; // Tuodaan UserService
+
+
 
 @Controller('sensors')
 export class SensorController {
-  constructor(private readonly sensorService: SensorService) {}
+  constructor(private readonly sensorService: SensorService,
+    @Inject(EmailService) private emailService: EmailService,
+    @Inject(UserService) private userService: UserService, // Injektoi UserService
+  ) {}
 
   @Post()
   async createSensor(@Body() createSensorDto: CreateSensorDto) {
     return this.sensorService.createSensor(createSensorDto);
   }
 
+  // @Post(':id/data')
+  // async addSensorData(
+  //   @Param('id') sensorId: number,
+  //   @Body() data: { temperature: number; humidity: number },
+  // ) {
+  //   const { temperature, humidity } = data;
+    
+  //   // Tulostetaan sensorin ID ja vastaanotettu data
+  //   console.log(`Sensor ID: ${sensorId}, Data: ${JSON.stringify(data)}`);
+  
+  //   // Lisää data tietokantaan tai muuhun käsittelyyn
+  //   return this.sensorService.addSensorData(sensorId, temperature, humidity);
+  // }
+  
+    // GET-pyyntö sensorin datan hakemiseksi id:n perusteella
+    @Get(':id/data')
+    async getSensorData(@Param('id') sensorId: number) {
+      // Haetaan sensorin dataa
+      const sensorData = await this.sensorService.getSensorData(sensorId);
+  
+      if (!sensorData || sensorData.length === 0) {
+        throw new Error(`No data found for sensor with ID: ${sensorId}`);
+      }
+  
+      return sensorData; // Palautetaan sensorin mittaustiedot
+    }
+
+  // @Post(':id/data')
+  // async addSensorData(
+  //   @Param('id') sensorId: string,
+  //   @Body() data: { temperature: number; humidity: number },
+  //   @Body('sensorName') sensorName: string,
+  //   @Body('sensorLocation') sensorLocation: string,
+  // ) {
+  //   const { temperature, humidity } = data;
+
+  //   // Haetaan käyttäjä tietokannasta käyttäen sensorin ID:tä
+  //   const user = await this.userService.findUserById(sensorId); // Hakee käyttäjän tiedot
+  //   if (!user) {
+  //     console.log(`Käyttäjää ei löytynyt sensorin ID:llä: ${sensorId}`);
+  //     return; // Jos käyttäjää ei löydy, lopetetaan
+  //   }
+    
+  //   const userEmail = user.email; // Haetaan sähköpostiosoite käyttäjän tiedoista
+
+  //   // Lämpötilan tarkistus
+  //   if (temperature < 18 || temperature > 20) {
+  //     const subject = `Sensor Alert: ${sensorId}, ${sensorName}`;
+  //     const text = `Sensor ${sensorId} ${sensorName} ${sensorLocation} alert. Lämpötila on ylittänyt sallitun rajan: ${temperature}`;
+  //     await this.emailService.sendEmail(userEmail, subject, text); // Lähetetään sähköposti oikealle käyttäjälle
+  //   }
+
+  //   // Kosteuden tarkistus
+  //   if (humidity < 25 || humidity > 60) {
+  //     const subject = `Sensor Alert: ${sensorId}, ${sensorName}`;
+  //     const text = `Sensor ${sensorId} ${sensorName} ${sensorLocation} alert. Kosteus on ylittänyt sallitun rajan: ${humidity}`;
+  //     await this.emailService.sendEmail(userEmail, subject, text); // Lähetetään sähköposti oikealle käyttäjälle
+  //   }
+
+  //   console.log(`updateSensorData: ${JSON.stringify(data)}`);
+  //   return this.sensorService.addSensorData(parseInt(sensorId), temperature, humidity);
+  // }
+  
   @Post(':id/data')
   async addSensorData(
-    @Param('id') sensorId: number,
-    @Body() data: { temperature: number; humidity: number },
+    @Param('id') sensorId: string,
+    @Body() data: { temperature: number; humidity: number; sensorName: string; sensorLocation: string },
   ) {
-    const { temperature, humidity } = data;
+    const { temperature, humidity, sensorName, sensorLocation } = data;
+
+    // Haetaan käyttäjä tietokannasta sensorin ID:n avulla
+    const user = await this.userService.findUserById(sensorId);
+    if (!user) {
+      console.log(`Käyttäjää ei löytynyt sensorin ID:llä: ${sensorId}`);
+      return; // Jos käyttäjää ei löydy, lopetetaan
+    }
     
-    // Tulostetaan sensorin ID ja vastaanotettu data
-    console.log(`Sensor ID: ${sensorId}, Data: ${JSON.stringify(data)}`);
-  
-    // Lisää data tietokantaan tai muuhun käsittelyyn
-    return this.sensorService.addSensorData(sensorId, temperature, humidity);
-  }
-  
+    const userEmail = user.email; // Haetaan sähköpostiosoite käyttäjän tiedoista
 
-  @Get(':id/data')
-  async getSensorData(@Param('id') sensorId: number) {
-    return this.sensorService.getSensorData(sensorId);
-  }
+    // Lämpötilan tarkistus (18-30 astetta)
+    if (temperature < 18 || temperature > 20) {
+      const subject = `Sensor Alert: ${sensorId}, ${sensorName}`;
+      const text = `Sensor ${sensorId} ${sensorName} ${sensorLocation} alert. Lämpötila on ylittänyt sallitun rajan: ${temperature}`;
+      await this.emailService.sendEmail(userEmail, subject, text); // Lähetetään sähköposti käyttäjälle
+    }
 
-  @Get(':id')
-  async getSensorById(@Param('id') id: number): Promise<Sensor> {
-      const sensor = await this.sensorService.getSensorById(id);
-      if (!sensor) {
-          throw new NotFoundException('Sensor not found');
-      }
-      return sensor;
+    // Kosteuden tarkistus (25%-60%)
+    if (humidity < 25 || humidity > 60) {
+      const subject = `Sensor Alert: ${sensorId}, ${sensorName}`;
+      const text = `Sensor ${sensorId} ${sensorName} ${sensorLocation} alert. Kosteus on ylittänyt sallitun rajan: ${humidity}`;
+      await this.emailService.sendEmail(userEmail, subject, text); // Lähetetään sähköposti käyttäjälle
+    }
+
+    console.log(`Sensor data: ${JSON.stringify(data)}`);
+    return this.sensorService.addSensorData(parseInt(sensorId), temperature, humidity);
   }
-  
 
   @Patch(':id')
   async updateSensor(

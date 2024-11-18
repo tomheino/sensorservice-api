@@ -5,6 +5,11 @@ import { CreateUserDto } from './user/dto/create-user.dto';
 import { User } from './user/entities/user.entity';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as express from 'express'; // Import express module
+import * as dotenv from 'dotenv'; // Import dotenv module
+
+
+dotenv.config();
+
 
 const swaggerInfo = {
   api_path: `/docs`,

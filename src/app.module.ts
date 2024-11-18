@@ -5,6 +5,7 @@ import { UserModule } from './user/user.module';
 import { SensorModule } from './sensor/sensor.module';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EmailService } from './email/email.service';
 
 
 @Module({
@@ -15,6 +16,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     "synchronize": true
   }), UserModule, SensorModule, AuthModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, EmailService],
 })
 export class AppModule {}

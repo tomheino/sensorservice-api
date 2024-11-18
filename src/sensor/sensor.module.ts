@@ -22,11 +22,13 @@ import { Sensor } from './entities/sensor.entity';
 import { SensorData } from './entities/sensor-data.entity';
 import { User } from 'src/user/entities/user.entity';
 import { UserModule } from 'src/user/user.module';
+import { EmailService } from 'src/email/email.service';  // Import the EmailModule
+
 
 @Module({
   imports: [TypeOrmModule.forFeature([Sensor, SensorData, User]), forwardRef(() => UserModule)],
   controllers: [SensorController],
-  providers: [SensorService],
+  providers: [SensorService, EmailService],
   exports: [SensorService], 
 })
 export class SensorModule {}
