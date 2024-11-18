@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -54,6 +54,28 @@ async findUserById(id: string): Promise<User> {
 async getUsers(): Promise<User []> {
     return await this.userRepository.find({relations: ["sensors"]});
 }
+async findUserIdByEmail(email: string): Promise<number | null> {
+  console.log('Etsitään käyttäjää sähköpostilla:', email);
+  if (!email || typeof email !== 'string') {
+      throw new BadRequestException('Valid email is required');
+  }
+
+  const user = await this.userRepository.findOne({
+      where: { email },
+  });
+
+  if (!user) {
+      console.log('Käyttäjää ei löytynyt.');
+      return null;
+  }
+
+  console.log('Käyttäjä löytyi:', user);
+  return user.id; // Palautetaan vain ID
+}
+
+
+
+
 async updateUser(id: number, updateUserDto: UpdateUserDto): Promise<User> {
     // Etsitään käyttäjä tietokannasta
     const user = await this.userRepository.findOne({ where: { id } });

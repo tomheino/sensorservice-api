@@ -47,7 +47,7 @@
 
 // ------------------------------------------------ //
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Sensor } from './entities/sensor.entity';
@@ -145,6 +145,21 @@ async getSensorData(sensorId: number): Promise<SensorData[]> {
 
     return sensorData;
   }
+
+  async getSensorById(id: number): Promise<Sensor> {
+    const sensor = await this.sensorRepository.findOne({
+      where: { id },
+      relations: ['user'], // Sisällytetään käyttäjätiedot
+    });
+  
+    if (!sensor) {
+      throw new NotFoundException('Sensor not found');
+    }
+  
+    return sensor;
+  }
+  
+
   async getSensorsByUserId(userId: number): Promise<Sensor[]> {
     return this.sensorRepository.find({
       where: { user: { id: userId } },

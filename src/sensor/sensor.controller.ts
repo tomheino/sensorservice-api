@@ -64,10 +64,11 @@
 // }
 
 // sensor.controller.ts
-import { Controller, Post, Body, Get, Param, Patch } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, NotFoundException } from '@nestjs/common';
 import { SensorService } from './sensor.service';
 import { CreateSensorDto } from './dto/create-sensor.dto';
 import { UpdateSensorDto } from './dto/update-sensor.dto';
+import { Sensor } from './entities/sensor.entity';
 
 @Controller('sensors')
 export class SensorController {
@@ -84,13 +85,29 @@ export class SensorController {
     @Body() data: { temperature: number; humidity: number },
   ) {
     const { temperature, humidity } = data;
+    
+    // Tulostetaan sensorin ID ja vastaanotettu data
+    console.log(`Sensor ID: ${sensorId}, Data: ${JSON.stringify(data)}`);
+  
+    // Lisää data tietokantaan tai muuhun käsittelyyn
     return this.sensorService.addSensorData(sensorId, temperature, humidity);
   }
+  
 
   @Get(':id/data')
   async getSensorData(@Param('id') sensorId: number) {
     return this.sensorService.getSensorData(sensorId);
   }
+
+  @Get(':id')
+  async getSensorById(@Param('id') id: number): Promise<Sensor> {
+      const sensor = await this.sensorService.getSensorById(id);
+      if (!sensor) {
+          throw new NotFoundException('Sensor not found');
+      }
+      return sensor;
+  }
+  
 
   @Patch(':id')
   async updateSensor(

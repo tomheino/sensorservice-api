@@ -3,7 +3,7 @@
 // @Controller('user')
 // export class UserController {}
 
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { SensorService } from 'src/sensor/sensor.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -26,7 +26,9 @@ export class UserController {
     // @UseGuards(JwtAuthGuard)
     async createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
         console.log(`createUser: ${JSON.stringify(createUserDto)}`)
-        return await this.userService.insertUser(createUserDto);
+        const user = await this.userService.insertUser(createUserDto);
+        console.log(`creating eUser: ${user}`)
+        return user;
     }
 
     @Get()
@@ -43,6 +45,23 @@ export class UserController {
     async getUserById(@Param('id') id: string) {
         return await this.userService.findUserById(id);
     }
+
+    @Get(':email')
+    @ApiOperation({ summary: 'Get User ID by Email' })
+    @ApiResponse({ status: 200, description: 'User ID returned' })
+    @ApiResponse({ status: 404, description: 'User with the given email not found' })
+    async getUserIdByEmail(@Param('email') email: string): Promise<{ id: number }> {
+        const userId = await this.userService.findUserIdByEmail(email);
+    
+        if (!userId) {
+            throw new NotFoundException('User with the given email not found');
+        }
+    
+        return { id: userId }; // Palautetaan ID objektina
+    }
+    
+    
+
 
     @Patch(':id')
     @ApiBearerAuth()    
