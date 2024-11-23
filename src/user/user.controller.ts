@@ -99,4 +99,11 @@ export class UserController {
       
       return sensors;
     }
+
+    @Get(':id/sensors/faulty')
+    async getUserFaultySensors(@Param('id') userId: number) {
+      return this.userService.getFaultySensors(userId);
+    }
+    
+
 }

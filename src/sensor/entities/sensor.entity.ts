@@ -40,4 +40,17 @@ export class Sensor {
 
   @OneToMany(() => SensorData, (sensorData) => sensorData.sensor)
   measuredValues: SensorData[];
+  
+  @Column({ default: false })
+  temperatureAlert: boolean;
+
+  @Column({ default: false })
+  humidityAlert: boolean;
+
+  @Column('simple-array', { default: '18,25' }) // Esimerkkiarvo: [18, 25] (lämpötilan alaraja ja yläraja)
+  temperatureRange: number[];
+
+  @Column('simple-array', { default: '30,60' }) // Esimerkkiarvo: [30, 60] (kosteuden alaraja ja yläraja)
+  humidityRange: number[];
+
 }

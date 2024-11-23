@@ -49,7 +49,7 @@
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Sensor } from './entities/sensor.entity';
 import { SensorData } from './entities/sensor-data.entity';
 import { UserService } from 'src/user/user.service';
@@ -165,5 +165,29 @@ async getSensorData(sensorId: number): Promise<SensorData[]> {
       where: { user: { id: userId } },
     });
   }
+
+  async updateSensorData(
+    sensorId: number,
+    updateFields: Partial<Sensor>,
+  ): Promise<Sensor> {
+    await this.sensorRepository.update(sensorId, updateFields);
+    return this.getSensorById(sensorId);
+  }
+  
+  
+
+  async getSensorDataWithinRange(sensorId: number, startDate: Date, endDate: Date) {
+    return this.sensorDataRepository.find({
+      where: {
+        sensor: { id: sensorId }, // Käytetään sensorin id:tä suhteen kautta
+        timestamp: Between(startDate, endDate),
+      },
+      order: { timestamp: 'ASC' },
+    });
+  }
+  
+  
+  
+  
 }
 

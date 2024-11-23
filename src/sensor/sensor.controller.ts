@@ -1,67 +1,3 @@
-// import { Controller, Post, Body, Param, Get, Delete } from '@nestjs/common';
-// import { SensorService } from './sensor.service';
-// import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-// import { Sensor } from './entities/sensor.entity';
-
-// @Controller('sensors')
-// @ApiTags('sensors')
-// export class SensorController {
-//   constructor(private readonly sensorService: SensorService) {}
-
-//   // Luo uusi sensori käyttäjälle
-//   @Post(':userId')
-//   @ApiOperation({ summary: 'Create a new sensor for the user' })
-//   @ApiResponse({ status: 201, description: 'Sensor created successfully.' })
-//   async createSensor(
-//     @Param('userId') userId: number,
-//     @Body() createSensorDto: { name: string; location: string; measuredValues: number[] },
-//   ): Promise<Sensor> {
-//     return await this.sensorService.createSensor(
-//       userId,
-//       createSensorDto.name,
-//       createSensorDto.location,
-//       createSensorDto.measuredValues,
-//     );
-//   }
-
-//   // Hae kaikki sensoreita käyttäjälle
-//   @Get(':userId')
-//   @ApiOperation({ summary: 'Get all sensors for the user' })
-//   @ApiResponse({ status: 200, description: 'List of sensors' })
-//   async getSensors(@Param('userId') userId: number): Promise<Sensor[]> {
-//     return await this.sensorService.getSensorsByUser(userId);
-//   }
-
-//   // Poista sensori
-//   @Delete(':sensorId')
-//   @ApiOperation({ summary: 'Delete a sensor by ID' })
-//   @ApiResponse({ status: 200, description: 'Sensor deleted successfully.' })
-//   async deleteSensor(@Param('sensorId') sensorId: number): Promise<void> {
-//     return await this.sensorService.deleteSensor(sensorId);
-//   }
-// }
-
-// // sensors.controller.ts
-// import { Controller, Post, Body } from '@nestjs/common';
-// import { SensorService } from './sensor.service';
-// import { CreateSensorDto } from './dto/create-sensor.dto';
-// import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-// import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-// import { UseGuards } from '@nestjs/common';
-
-// @Controller('sensors')
-// @ApiTags('sensors')
-// export class SensorController {
-//   constructor(private readonly sensorService: SensorService) {}
-
-//   @Post()
-//   @ApiOperation({ summary: 'Create a new sensor with measured values' })
-// //   @ApiBearerAuth()
-// //   @UseGuards(JwtAuthGuard)
-//   async createSensor(@Body() createSensorDto: CreateSensorDto) {
-//     return await this.sensorService.createSensor(createSensorDto);
-//   }
-// }
 
 // sensor.controller.ts
 import { Controller, Post, Body, Get, Param, Patch, NotFoundException, Inject } from '@nestjs/common';
@@ -86,19 +22,17 @@ export class SensorController {
     return this.sensorService.createSensor(createSensorDto);
   }
 
-  // @Post(':id/data')
-  // async addSensorData(
-  //   @Param('id') sensorId: number,
-  //   @Body() data: { temperature: number; humidity: number },
-  // ) {
-  //   const { temperature, humidity } = data;
-    
-  //   // Tulostetaan sensorin ID ja vastaanotettu data
-  //   console.log(`Sensor ID: ${sensorId}, Data: ${JSON.stringify(data)}`);
-  
-  //   // Lisää data tietokantaan tai muuhun käsittelyyn
-  //   return this.sensorService.addSensorData(sensorId, temperature, humidity);
-  // }
+  @Get(':id')
+  async getSensorById(@Param('id') sensorId: number) {
+    // Haetaan sensori tietokannasta ID:n perusteella
+    const sensor = await this.sensorService.getSensorById(sensorId);
+
+    if (!sensor) {
+      throw new Error(`Sensor with ID ${sensorId} not found`);
+    }
+
+    return sensor; // Palautetaan sensorin tiedot, mukaan lukien käyttäjän tiedot
+  }
   
     // GET-pyyntö sensorin datan hakemiseksi id:n perusteella
     @Get(':id/data')
@@ -113,75 +47,135 @@ export class SensorController {
       return sensorData; // Palautetaan sensorin mittaustiedot
     }
 
-  // @Post(':id/data')
-  // async addSensorData(
-  //   @Param('id') sensorId: string,
-  //   @Body() data: { temperature: number; humidity: number },
-  //   @Body('sensorName') sensorName: string,
-  //   @Body('sensorLocation') sensorLocation: string,
-  // ) {
-  //   const { temperature, humidity } = data;
 
-  //   // Haetaan käyttäjä tietokannasta käyttäen sensorin ID:tä
-  //   const user = await this.userService.findUserById(sensorId); // Hakee käyttäjän tiedot
-  //   if (!user) {
-  //     console.log(`Käyttäjää ei löytynyt sensorin ID:llä: ${sensorId}`);
-  //     return; // Jos käyttäjää ei löydy, lopetetaan
-  //   }
-    
-  //   const userEmail = user.email; // Haetaan sähköpostiosoite käyttäjän tiedoista
+// @Post(':id/data')
+// async addSensorData(
+//   @Param('id') sensorId: number,
+//   @Body() data: { temperature: number; humidity: number },
+// ) {
+//   const { temperature, humidity } = data;
 
-  //   // Lämpötilan tarkistus
-  //   if (temperature < 18 || temperature > 20) {
-  //     const subject = `Sensor Alert: ${sensorId}, ${sensorName}`;
-  //     const text = `Sensor ${sensorId} ${sensorName} ${sensorLocation} alert. Lämpötila on ylittänyt sallitun rajan: ${temperature}`;
-  //     await this.emailService.sendEmail(userEmail, subject, text); // Lähetetään sähköposti oikealle käyttäjälle
-  //   }
+//   // Haetaan sensorin tiedot, mukaan lukien käyttäjän sähköpostiosoite
+//   const sensor = await this.sensorService.getSensorById(sensorId);
 
-  //   // Kosteuden tarkistus
-  //   if (humidity < 25 || humidity > 60) {
-  //     const subject = `Sensor Alert: ${sensorId}, ${sensorName}`;
-  //     const text = `Sensor ${sensorId} ${sensorName} ${sensorLocation} alert. Kosteus on ylittänyt sallitun rajan: ${humidity}`;
-  //     await this.emailService.sendEmail(userEmail, subject, text); // Lähetetään sähköposti oikealle käyttäjälle
-  //   }
+//   if (!sensor) {
+//     console.log(`Sensoria ei löytynyt ID:llä: ${sensorId}`);
+//     return { error: `Sensor with ID ${sensorId} not found` };
+//   }
 
-  //   console.log(`updateSensorData: ${JSON.stringify(data)}`);
-  //   return this.sensorService.addSensorData(parseInt(sensorId), temperature, humidity);
-  // }
-  
-  @Post(':id/data')
-  async addSensorData(
-    @Param('id') sensorId: string,
-    @Body() data: { temperature: number; humidity: number; sensorName: string; sensorLocation: string },
-  ) {
-    const { temperature, humidity, sensorName, sensorLocation } = data;
+//   const user = sensor.user;
+//   if (!user) {
+//     console.log(`Käyttäjää ei löytynyt sensorille ID:llä: ${sensorId}`);
+//     return { error: `No user found for sensor with ID ${sensorId}` };
+//   }
 
-    // Haetaan käyttäjä tietokannasta sensorin ID:n avulla
-    const user = await this.userService.findUserById(sensorId);
-    if (!user) {
-      console.log(`Käyttäjää ei löytynyt sensorin ID:llä: ${sensorId}`);
-      return; // Jos käyttäjää ei löydy, lopetetaan
-    }
-    
-    const userEmail = user.email; // Haetaan sähköpostiosoite käyttäjän tiedoista
+//   const userEmail = user.email;
+//   const sensorName = sensor.name;
+//   const sensorLocation = sensor.location;
 
-    // Lämpötilan tarkistus (18-30 astetta)
-    if (temperature < 18 || temperature > 20) {
-      const subject = `Sensor Alert: ${sensorId}, ${sensorName}`;
-      const text = `Sensor ${sensorId} ${sensorName} ${sensorLocation} alert. Lämpötila on ylittänyt sallitun rajan: ${temperature}`;
-      await this.emailService.sendEmail(userEmail, subject, text); // Lähetetään sähköposti käyttäjälle
-    }
+//   // Lämpötilan tarkistus
+//   if (temperature < 18 || temperature > 20) {
+//     const subject = `Sensor Alert: ${sensorName}`;
+//     const text = `Sensor ${sensorName} at ${sensorLocation} alert. Temperature out of range: ${temperature}°C`;
+//     await this.emailService.sendEmail(userEmail, subject, text);
+//   }
 
-    // Kosteuden tarkistus (25%-60%)
-    if (humidity < 25 || humidity > 60) {
-      const subject = `Sensor Alert: ${sensorId}, ${sensorName}`;
-      const text = `Sensor ${sensorId} ${sensorName} ${sensorLocation} alert. Kosteus on ylittänyt sallitun rajan: ${humidity}`;
-      await this.emailService.sendEmail(userEmail, subject, text); // Lähetetään sähköposti käyttäjälle
-    }
+//   // Kosteuden tarkistus
+//   if (humidity < 25 || humidity > 60) {
+//     const subject = `Sensor Alert: ${sensorName}`;
+//     const text = `Sensor ${sensorName} at ${sensorLocation} alert. Humidity out of range: ${humidity}%`;
+//     await this.emailService.sendEmail(userEmail, subject, text);
+//   }
 
-    console.log(`Sensor data: ${JSON.stringify(data)}`);
-    return this.sensorService.addSensorData(parseInt(sensorId), temperature, humidity);
+//   console.log(`Lisätään data sensorille ID: ${sensorId}: ${JSON.stringify(data)}`);
+//   return this.sensorService.addSensorData(sensorId, temperature, humidity);
+// }
+
+@Post(':id/data')
+async addSensorData(
+  @Param('id') sensorId: number,
+  @Body() data: { temperature: number; humidity: number },
+) {
+  const { temperature, humidity } = data;
+
+  // Haetaan sensorin tiedot
+  const sensor = await this.sensorService.getSensorById(sensorId);
+
+  if (!sensor) {
+    console.log(`Sensoria ei löytynyt ID:llä: ${sensorId}`);
+    return { error: `Sensor with ID ${sensorId} not found` };
   }
+
+  // Haetaan käyttäjä
+  const user = sensor.user;
+  if (!user) {
+    console.log(`Käyttäjää ei löytynyt sensorille ID:llä: ${sensorId}`);
+    return { error: `No user found for sensor with ID ${sensorId}` };
+  }
+
+  const userEmail = user.email;
+  const sensorName = sensor.name;
+  const sensorLocation = sensor.location;
+
+  // Lämpötila-alertin tarkistus
+  let temperatureAlert = false;
+  if (temperature < sensor.temperatureRange[0] || temperature > sensor.temperatureRange[1]) {
+    temperatureAlert = true;
+
+    // Lähetetään hälytys vain, jos alertti ei ole jo aktiivinen
+    if (!sensor.temperatureAlert) {
+      const subject = `Sensor Alert: ${sensorName}`;
+      const text = `Sensor ${sensorName} at ${sensorLocation} alert. Temperature out of range: ${temperature}°C`;
+      await this.emailService.sendEmail(userEmail, subject, text);
+    }
+  }
+
+  // Kosteus-alertin tarkistus
+  let humidityAlert = false;
+  if (humidity < sensor.humidityRange[0] || humidity > sensor.humidityRange[1]) {
+    humidityAlert = true;
+
+    // Lähetetään hälytys vain, jos alertti ei ole jo aktiivinen
+    if (!sensor.humidityAlert) {
+      const subject = `Sensor Alert: ${sensorName}`;
+      const text = `Sensor ${sensorName} at ${sensorLocation} alert. Humidity out of range: ${humidity}%`;
+      await this.emailService.sendEmail(userEmail, subject, text);
+    }
+  }
+
+  // Päivitetään alert-status tietokantaan vain, jos se on muuttunut
+  if (
+    sensor.temperatureAlert !== temperatureAlert ||
+    sensor.humidityAlert !== humidityAlert
+  ) {
+    sensor.temperatureAlert = temperatureAlert;
+    sensor.humidityAlert = humidityAlert;
+    await this.sensorService.updateSensorData(sensorId, {
+      temperatureAlert,
+      humidityAlert,
+    });
+  }
+
+  // Lisää uusi mittaustieto tietokantaan
+  console.log(`Lisätään data sensorille ID: ${sensorId}: ${JSON.stringify(data)}`);
+  return this.sensorService.addSensorData(sensorId, temperature, humidity);
+}
+
+
+@Get(':id/data/weekly')
+async getWeeklyData(@Param('id') sensorId: number) {
+  const now = new Date();
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(now.getDate() - 7);
+
+  return this.sensorService.getSensorDataWithinRange(sensorId, oneWeekAgo, now);
+}
+
+
+
+
+
+
 
   @Patch(':id')
   async updateSensor(

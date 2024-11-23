@@ -5,12 +5,15 @@ import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { plainToInstance } from 'class-transformer';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Sensor } from 'src/sensor/entities/sensor.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Sensor) 
+    private sensorRepository: Repository<Sensor>
   ) {}
 
   async findByEmail(email: string): Promise<User | undefined> {
@@ -118,5 +121,14 @@ async deleteUserById(id: string): Promise<void> {
   
     console.log(`deleting ${JSON.stringify(user)} and related sensors`);
       await this.userRepository.remove(user);
+    }
+
+    async getFaultySensors(userId: number): Promise<Sensor[]> {
+      return this.sensorRepository.find({
+        where: [
+          { user: { id: userId }, temperatureAlert: true },
+          { user: { id: userId }, humidityAlert: true },
+        ],
+      });
     }
 }

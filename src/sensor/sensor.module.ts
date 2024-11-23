@@ -29,6 +29,6 @@ import { EmailService } from 'src/email/email.service';  // Import the EmailModu
   imports: [TypeOrmModule.forFeature([Sensor, SensorData, User]), forwardRef(() => UserModule)],
   controllers: [SensorController],
   providers: [SensorService, EmailService],
-  exports: [SensorService], 
+  exports: [SensorService, TypeOrmModule], 
 })
 export class SensorModule {}
